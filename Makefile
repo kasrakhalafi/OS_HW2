@@ -71,6 +71,10 @@ QEMU = $(shell if which qemu > /dev/null; \
 	echo "***" 1>&2; exit 1)
 endif
 
+ifndef SCHEDPOLICY
+SCHEDPOLICY := DEFAULT
+endif
+
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
@@ -182,6 +186,8 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
+	_sanity\
+
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -221,6 +227,11 @@ ifndef CPUS
 CPUS := 2
 endif
 QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA)
+
+
+flags:
+	@echo $(SCHEDPOLICY)
+
 
 qemu: fs.img xv6.img
 	$(QEMU) -serial mon:stdio $(QEMUOPTS)

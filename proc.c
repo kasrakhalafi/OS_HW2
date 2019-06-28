@@ -532,3 +532,43 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+
+#ifdef SML
+struct proc* findReadyProcess(int *index1, int *index2, int *index3, uint *priority) {
+  int i;
+  struct proc* proc2;
+notfound:
+  for (i = 0; i < NPROC; i++) {
+    switch(*priority) {
+      case 1:
+        proc2 = &ptable.proc[(*index1 + i) % NPROC];
+        if (proc2->state == RUNNABLE && proc2->priority == *priority) {
+          *index1 = (*index1 + 1 + i) % NPROC;
+          return proc2; // found a runnable process with appropriate priority
+        }
+      case 2:
+        proc2 = &ptable.proc[(*index2 + i) % NPROC];
+        if (proc2->state == RUNNABLE && proc2->priority == *priority) {
+          *index2 = (*index2 + 1 + i) % NPROC;
+          return proc2; // found a runnable process with appropriate priority
+        }
+      case 3:
+        proc2 = &ptable.proc[(*index3 + i) % NPROC];
+        if (proc2->state == RUNNABLE && proc2->priority == *priority){
+          *index3 = (*index3 + 1 + i) % NPROC;
+          return proc2; // found a runnable process with appropriate priority
+        }
+    }
+  }
+  if (*priority == 3) {//did not find any process on any of the prorities
+    *priority = 3;
+    return 0;
+  }
+  else {
+    *priority += 1; //will try to find a process at a lower priority (ighter value of priority)
+    goto notfound;
+  }
+  return 0;
+}
+#endif
