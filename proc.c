@@ -419,63 +419,79 @@ void scheduler(void)
               p = minP;
         #else
         #ifdef 3Q
-          // int priority = 1;
-          int i;
-          int index=0;
-          struct proc *proc2;
-          struct proc *highP = 0;
-          struct proc *minP = 0;
-          int j=1;
-          for (int j = 0; j < 4; j++)
-          {
-            switch (j)
-            {
-            case 1:
-              //GRT
-              for (proc2 = ptable.proc; proc2 < &ptable.proc[NPROC]; proc2++)
-              {
-                if (proc2->state != RUNNABLE)
-                  continue;
-                highP = proc2;
-                break;
-              }
-              for (p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
-              {
+            struct proc *highP = 0;
+            struct proc *minP = 0;
+            bool found = 0;
 
-                if ((p1->state == RUNNABLE) && (highP->rutime / (ticks - (highP->ctime - 1)) > p1->rutime / (ticks - (p1->ctime - 1))))
-                  highP = p1;
-              }
-              p = highP;
-              break;
-            case 2:
-              //FFR
-              proc2 = &ptable.proc[(index + i) % NPROC];
-              if (proc2->state == RUNNABLE && proc2->priority == j)
+            for (int j = 0=1; j < 4; j++)
+            {
+              switch (j)
               {
-                index = (index + 1 + i) % NPROC;
-                p = proc2; // found a runnable process with appropriate priority
+                case 1:
+                  //GRT
+                  for (p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
+                  {
+                    if ((p1->state == RUNNABLE) && (p1->priority == j))
+                    {
+                      highP = p1;
+                      found =1;
+                      break;
+                    }
+                      
+                  }
+                  for (p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
+                  {
+
+                    if ((p1->state == RUNNABLE) && (p1->priority == j) && (highP->rutime / (ticks - (highP->ctime - 1)) > p1->rutime / (ticks - (p1->ctime - 1))))
+                      highP = p1;
+                  }
+                  p = highP;
+                  break;
+                case 2:
+                  //FFR
+                  for (p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
+                  {
+                    if ((p1->state == RUNNABLE) && (p1->priority == j))
+                    {
+                      minPP = p1;
+                      found = 1;
+                      break;
+                    }
+                  }
+                  for (p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
+                  {
+
+                    if ((p1->btime < minP->btime) && (p1->priority == j))
+                      minP = p1;
+                  }
+                  p = minP;
+                  break;
+                case 3:
+                  //RR
+                  for (p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
+                  {
+                    if ((p1->state == RUNNABLE) && (p1->priority == j))
+                    {
+                      p=p1;
+                      found = 1;
+                      break;
+                    }
+                  }
+                  }
+                  if(found)
+                    break;
               }
-              break;
-            case 3:
-              //RR
-              proc2 = &ptable.proc[(index + i) % NPROC];
-              if (proc2->state == RUNNABLE && proc2->priority == j)
-              {
-                index = (index + 1 + i) % NPROC;
-                p = proc2; // found a runnable process with appropriate priority
-              }
-              break;
-            }
+        #endif
+        #endif
+        #endif
+        #endif
           }
           
               
           
           
 
-        #endif
-        #endif
-        #endif
-        #endif
+        
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
