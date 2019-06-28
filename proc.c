@@ -338,28 +338,28 @@ void scheduler(void)
   int count = 1; //
   for (;;)
   {
-    // Enable interrupts on this processor.
-    sti();
-#ifdef DEFAULT
-    if (count < Quanta)
-    {
-      count++;
-      continue;
-    }
-    else
-    {
-      count = 0;
-    }
-#endif
-    // Loop over process table looking for process to run.
-    acquire(&ptable.lock);
-    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    {
-#ifdef DEFAULT
-      if (p->state != RUNNABLE)
-        continue;
-#else
-#ifdef GRT
+          // Enable interrupts on this processor.
+          sti();
+      #ifdef DEFAULT
+          if (count < Quanta)
+          {
+            count++;
+            continue;
+          }
+          else
+          {
+            count = 0;
+          }
+      #endif
+          // Loop over process table looking for process to run.
+          acquire(&ptable.lock);
+          for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+          {
+      #ifdef DEFAULT
+            if (p->state != RUNNABLE)
+              continue;
+      #else
+      #ifdef GRT
 
       struct proc *highP = 0;
       struct proc *p1 = 0;
@@ -377,14 +377,36 @@ void scheduler(void)
       if (highP != 0)
         p = highP;
 
-#else
-#ifdef FRR
+      #else
+      #ifdef FRR
+            struct proc *minP = 0;
 
+            if (p->state != RUNNABLE)
+              continue;
+
+            // ignore init and sh processes from FCFS
+            if (p->pid > 1)
+            {
+              if (minP != 0)
+              {
+                // here I find the process with the lowest creation time (the first one that was created)
+                if (p->btime < minP->btime)
+                  minP = p;
+              }
+              else
+                minP = p;
+            }
+
+            // If I found the process which I created first and it is runnable I run it
+            //(in the real FCFS I should not check if it is runnable, but for testing purposes I have to make this control, otherwise every time I launch
+            // a process which does I/0 operation (every simple command) everything will be blocked
+            if (minP != 0 && minP->state == RUNNABLE)
+              p = minP;
 #else
 
-#endif
-#endif
-#endif
+      #endif
+      #endif
+      #endif
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
