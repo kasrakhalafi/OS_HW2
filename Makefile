@@ -187,6 +187,8 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_sanity\
+	_RRsanity\
+	_Gsanity\
 
 
 fs.img: mkfs README $(UPROGS)

@@ -30,7 +30,6 @@ main(int argc, char *argv[])
 	}
 	for (i = 0; i < 30; i++) {
 		for (size_t j = 0; j < 500; j++) {
-			/* code */
 			int cid = i;
 			pid = wait2(&retime, &rutime, &stime);
 			switch(cid) {
