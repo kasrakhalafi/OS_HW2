@@ -51,10 +51,14 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+  int priority;                // Process priority
+  uint ctime;                   // Process creation time
+  int stime;                   //process SLEEPING time
+  int retime;                  //process READY(RUNNABLE) time
+int rutime;
 };
 
-// Process memory is laid out contiguously, low addresses first:
-//   text
-//   original data and bss
-//   fixed-size stack
-//   expandable heap
+
+int totalTickets();
+struct proc* findReadyProcess(int *index1, int *index2, int *index3, uint *priority);
+
