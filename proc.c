@@ -263,6 +263,7 @@ void exit(void)
   {
     if (p->parent == curproc)
     {
+      p->etime = ticks;
       p->parent = initproc;
       if (p->state == ZOMBIE)
         wakeup1(initproc);
@@ -351,6 +352,17 @@ void scheduler(void)
             count = 0;
           }
       #endif
+      #ifdef FRR
+                if (count < Quanta)
+                {
+                  count++;
+                  continue;
+                }
+                else
+                {
+                  count = 0;
+                }
+      #endif
           // Loop over process table looking for process to run.
           acquire(&ptable.lock);
           for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -380,38 +392,95 @@ void scheduler(void)
       #else
       #ifdef FRR
             struct proc *minP = 0;
-
             if (p->state != RUNNABLE)
               continue;
-
+            minP=p;
             // ignore init and sh processes from FCFS
             if (p->pid > 1)
             {
               if (minP != 0)
               {
-                // here I find the process with the lowest creation time (the first one that was created)
-                if (p->btime < minP->btime)
-                  minP = p;
+                for (p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
+                {
+                  if (p1->btime < minP->btime)
+                    minP = p1;
+                }
               }
               else
                 minP = p;
             }
+            if (minP != 0 && minP->state == RUNNABLE)
+              p = minP;
 
             // If I found the process which I created first and it is runnable I run it
             //(in the real FCFS I should not check if it is runnable, but for testing purposes I have to make this control, otherwise every time I launch
             // a process which does I/0 operation (every simple command) everything will be blocked
             if (minP != 0 && minP->state == RUNNABLE)
               p = minP;
-#else
+        #else
+        #ifdef 3Q
+          // int priority = 1;
+          int i;
+          int index=0;
+          struct proc *proc2;
+          struct proc *highP = 0;
+          struct proc *minP = 0;
+          int j=1;
+          for (int j = 0; j < 4; j++)
+          {
+            switch (j)
+            {
+            case 1:
+              //GRT
+              for (proc2 = ptable.proc; proc2 < &ptable.proc[NPROC]; proc2++)
+              {
+                if (proc2->state != RUNNABLE)
+                  continue;
+                highP = proc2;
+                break;
+              }
+              for (p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
+              {
 
-      #endif
-      #endif
-      #endif
+                if ((p1->state == RUNNABLE) && (highP->rutime / (ticks - (highP->ctime - 1)) > p1->rutime / (ticks - (p1->ctime - 1))))
+                  highP = p1;
+              }
+              p = highP;
+              break;
+            case 2:
+              //FFR
+              proc2 = &ptable.proc[(index + i) % NPROC];
+              if (proc2->state == RUNNABLE && proc2->priority == j)
+              {
+                index = (index + 1 + i) % NPROC;
+                p = proc2; // found a runnable process with appropriate priority
+              }
+              break;
+            case 3:
+              //RR
+              proc2 = &ptable.proc[(index + i) % NPROC];
+              if (proc2->state == RUNNABLE && proc2->priority == j)
+              {
+                index = (index + 1 + i) % NPROC;
+                p = proc2; // found a runnable process with appropriate priority
+              }
+              break;
+            }
+          }
+          
+              
+          
+          
+
+        #endif
+        #endif
+        #endif
+        #endif
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
-      c->proc->btime = ticks;
       c->proc = p;
+      c->proc->btime = ticks;
       switchuvm(p);
       p->state = RUNNING;
 
@@ -602,3 +671,73 @@ void procdump(void)
     cprintf("\n");
   }
 }
+
+chpr(int pid, int priority)
+{
+  struct proc *p;
+
+  acquire(&ptable.lock);
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->pid == pid)
+    {
+      p->priority = priority;
+      release(&ptable.lock);
+      return 1;
+      break;
+    }
+  }
+  return 0;
+}
+
+int nice(int p, int v)
+{
+  int value, pid;
+  pid = p;
+  value = v;
+  // if (value < 1 || value > 3)
+  // {
+  //   printf(2, " first pid , second value between 1 to 3\n");
+  //   exit();
+  // }
+  return chpr(pid, value);
+  }
+
+  int getPerformanceData(int *wtime, int *rtime){
+    struct proc *p;
+    int havekids, pid;
+    acquire(&ptable.lock);
+    for (;;)
+    {
+      // Scan through table looking for zombie children.
+      havekids = 0;
+      for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+      {
+        if (p->parent != myproc())
+          continue;
+        havekids = 1;
+        if (p->state == ZOMBIE)
+        {
+          // Found one.
+          *wtime = p->etime - (p->ctime + p->rutime);
+          *rtime = p->rutime;
+          pid = p->pid;
+          kfree(p->kstack);
+          p->kstack = 0;
+          freevm(p->pgdir);
+          p->state = UNUSED;
+          p->pid = 0;
+          p->parent = 0;
+          p->name[0] = 0;
+          p->killed = 0;
+          p->ctime = 0;
+          p->retime = 0;
+          p->rutime = 0;
+          p->stime = 0;
+          p->priority = 0;
+          release(&ptable.lock);
+          return pid;
+        }
+      }
+    }
+  }

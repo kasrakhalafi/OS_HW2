@@ -65,6 +65,8 @@ struct proc
   int retime;                 //process READY(RUNNABLE) time ??
   int rutime;                 //process RUNNING time ??
   int btime;                  //process back to queue in FRR
+  int priority;               //// Process priority
+  int etime;
 };
 
 // Process memory is laid out contiguously, low addresses first:

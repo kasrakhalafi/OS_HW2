@@ -12,12 +12,31 @@ main(void)
 {
   int pid, wpid;
 
+  chpr(getpid(), 1);
+
   if(open("console", O_RDWR) < 0){
     mknod("console", 1, 1);
     open("console", O_RDWR);
   }
   dup(0);  // stdout
   dup(0);  // stderr
+
+  #ifdef DEFAULT
+    printf(1, "Scheduler policy: DEFAULT\n");
+  #else
+  #ifdef FRR
+    printf(1, "Scheduler policy: FRR\n");
+  #else
+  #ifdef GRT
+    printf(1, "Scheduler policy: GRT\n");
+  #else
+  #ifdef 3Q
+  printf(1, "Scheduler policy: 3Q\n");
+  
+  #endif
+  #endif
+  #endif
+  #endif
 
   for(;;){
     printf(1, "init: starting sh\n");

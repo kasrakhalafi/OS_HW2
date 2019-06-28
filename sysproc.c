@@ -90,7 +90,21 @@ sys_uptime(void)
   return xticks;
 }
 
-int getPerformanceData(int *wtime, int *rtime)
+int sys_getPerformanceData(void)
 {
-  return 0;
+  int* wtime, rtime;
+  if (argint(0, &wtime) < 0)
+    return -1;
+  if (argint(1, &rtime) < 0)
+    return -1;
+  return getPerformanceData(wtime,rtime);
+}
+
+int sys_nice(void){
+  int pid, value;
+  if (argint(0, &pid) < 0)
+    return -1;
+  if (argint(1, &value) < 0)
+    return -1;
+  return nice(pid,value);  
 }
