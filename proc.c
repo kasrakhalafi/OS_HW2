@@ -509,7 +509,7 @@ void scheduler(void)
     }
     release(&ptable.lock);
   }
-}
+
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores
