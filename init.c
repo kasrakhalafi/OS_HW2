@@ -21,8 +21,8 @@ main(void)
   dup(0);  // stdout
   dup(0);  // stderr
 
-  #ifdef DEFAULT
-    printf(1, "Scheduler policy: DEFAULT\n");
+  #ifdef RR
+    printf(1, "Scheduler policy: RR\n");
   #else
   #ifdef FRR
     printf(1, "Scheduler policy: FRR\n");

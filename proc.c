@@ -73,6 +73,7 @@ myproc(void)
 // state required to run in the kernel.
 // Otherwise return 0.
 static struct proc *
+
 allocproc(void)
 {
   struct proc *p;
@@ -90,6 +91,12 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+
+  p->ctime = ticks;
+  p->btime = ticks;
+  p->retime = 0;
+  p->rutime = 0;
+  p->stime = 0;
 
   release(&ptable.lock);
 
@@ -341,7 +348,7 @@ void scheduler(void)
   {
           // Enable interrupts on this processor.
           sti();
-      #ifdef DEFAULT
+      #ifdef RR
           if (count < Quanta)
           {
             count++;
@@ -367,7 +374,7 @@ void scheduler(void)
           acquire(&ptable.lock);
           for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
           {
-      #ifdef DEFAULT
+      #ifdef RR
             if (p->state != RUNNABLE)
               continue;
       #else
@@ -423,7 +430,7 @@ void scheduler(void)
             struct proc *minP = 0;
             bool found = 0;
 
-            for (int j = 0=1; j < 4; j++)
+            for (int j = 1; j < 4; j++)
             {
               switch (j)
               {
@@ -718,7 +725,7 @@ int nice(int p, int v)
   // }
   return chpr(pid, value);
   }
-
+  
   int getPerformanceData(int *wtime, int *rtime){
     struct proc *p;
     int havekids, pid;
